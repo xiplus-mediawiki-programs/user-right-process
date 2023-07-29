@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# %%
 import argparse
 import json
 import os
@@ -16,7 +15,6 @@ import pywikibot.flow
 from config import (config_page_name, host,  # pylint: disable=E0611,W0614
                     password, user)
 
-# %%
 parser = argparse.ArgumentParser()
 parser.add_argument('--confirm-export', action='store_true')
 parser.add_argument('--confirm-notice', action='store_true')
@@ -30,11 +28,9 @@ args = parser.parse_args()
 
 os.environ['TZ'] = 'UTC'
 
-# %%
 site = pywikibot.Site('zh', 'wikipedia')
 site.login()
 
-# %%
 config_page = pywikibot.Page(site, config_page_name)
 cfg = config_page.text
 cfg = json.loads(cfg)
@@ -43,7 +39,6 @@ if not cfg['enable']:
     print('disabled')
     exit()
 
-# %%
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 TIME_MIN = pywikibot.Timestamp(1970, 1, 1)
@@ -119,7 +114,6 @@ ORDER BY log_id DESC
 LIMIT 1
 """
 
-# %%
 
 
 def parse_query_timestamp(row):
@@ -300,7 +294,6 @@ class UserDataJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-# %%
 conn = pymysql.connect(
     host=host,
     user=user,
@@ -310,7 +303,6 @@ conn = pymysql.connect(
 )
 cur = conn.cursor()
 
-# %%
 user_data_path = os.path.join(BASE_DIR, 'user_data.json')
 user_data = defaultdict(UserData)
 try:
@@ -321,7 +313,6 @@ try:
 except Exception as e:
     print(e)
 
-# %%
 cur.execute(user_groups_query)
 user_with_groups = cur.fetchall()
 
@@ -337,11 +328,9 @@ for row in user_with_groups:
 
     all_username.add(username)
 
-# %%
 awb_page = pywikibot.Page(site, 'Wikipedia:AutoWikiBrowser/CheckPageJSON')
 awb_data = json.loads(awb_page.text)
 
-# %%
 for username in awb_data['enabledusers']:
     if user_data[username].actor_id is None:
         cur.execute(actor_id_query, username)
@@ -353,11 +342,9 @@ for username in awb_data['enabledusers']:
 
     all_username.add(username)
 
-# %%
 for username in set(user_data.keys()) - all_username:
     del user_data[username]
 
-# %%
 for username in user_data:
     last_time = user_data[username].last_time
     if last_time > DATE_DISPLAY:
@@ -380,7 +367,6 @@ for username in user_data:
         user_data[username].last_right
     )
 
-# %%
 users_to_notice = {}
 users_to_report = {}
 report_text = ''
@@ -417,7 +403,6 @@ for user in sorted(user_data.values(), key=lambda user: user.last_time):
     if len(display_groups) > 0 and last_time < DATE_REVOKE and user.last_report < DATE_LAST_REPORT:
         users_to_report[username] = display_groups
 
-# %%
 exportPage = pywikibot.Page(site, cfg['export_page'])
 text = exportPage.text
 
@@ -429,16 +414,13 @@ idx1 = text.index(REPORT_START) + len(REPORT_START)
 idx2 = text.index(REPORT_END)
 text = text[:idx1] + '\n' + report_text + text[idx2:]
 
-# %%
 if args.confirm_export:
     pywikibot.showDiff(exportPage.text, text)
 
-# %%
 if not args.confirm_export or input('Save export page? ').lower() in ['y', 'yes']:
     exportPage.text = text
     exportPage.save(summary=cfg['export_summary'], minor=False)
 
-# %%
 for username, groups in users_to_notice.items():
     if user_data[username].last_notice < DATE_LAST_NOTICE:
         if groups == ['ipblock-exempt']:
@@ -448,9 +430,12 @@ for username, groups in users_to_notice.items():
             title = '因不活躍而取消權限的通知'
             content = '{{subst:Inactive right|1=' + get_right_text(groups, subst=True) + '}}'
 
+        print('Notice {} with title {} and content {}'.format(username, title, content))
         if args.confirm_notice and input('Notice {} with title {} and content {} ?'.format(username, title, content)).lower() not in ['y', 'yes']:
             continue
 
+        if username is None:
+            continue
         talkPage = pywikibot.Page(site, 'User talk:' + username)
         if talkPage.is_flow_page():
             board = pywikibot.flow.Board(talkPage)
@@ -467,7 +452,6 @@ for username, groups in users_to_notice.items():
         with open(user_data_path, 'w', encoding='utf8') as f:
             json.dump(user_data, f, ensure_ascii=False, indent='\t', cls=UserDataJSONEncoder)
 
-# %%
 if len(users_to_report) > 0:
     reportPage = pywikibot.Page(site, cfg['report_page'])
     text = reportPage.text

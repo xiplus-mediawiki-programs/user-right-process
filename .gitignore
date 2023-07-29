@@ -1,0 +1,8 @@
+__pycache__/
+apicache-py3/
+config.py
+pywikibot*.lwp
+throttle.ctrl
+user_data.json
+user-config.py
+user-password.py
