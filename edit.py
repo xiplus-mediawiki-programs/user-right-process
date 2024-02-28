@@ -54,6 +54,7 @@ REPORT_END = '<!-- report end -->'
 SIGN_START = '<!-- sign start -->'
 SIGN_END = '<!-- sign end -->'
 RIGHTS_TO_DISPLAY = [
+    'abusefilter-helper',
     'autoreviewer',
     'awb',
     'confirmed',
