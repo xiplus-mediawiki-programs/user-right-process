@@ -61,6 +61,7 @@ RIGHTS_TO_DISPLAY = [
     'eventparticipant',
     'filemover',
     'ipblock-exempt',
+    'ipblock-exempt-grantor',
     'massmessage-sender',
     'patroller',
     'rollbacker',
